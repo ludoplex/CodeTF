@@ -17,12 +17,10 @@ class ApexCodeUtility(LanguageSpecificUtility):
             current_node = queue.pop(0)
             current_type = str(current_node.type)
             if current_type == "class_declaration":
-                class_name_node = current_node.children[2]  # Assuming class name is the second child
-                var_nodes.append([class_name_node, "class_{}".format(class_count)])
+                var_nodes.append([current_node.children[2], f"class_{class_count}"])
                 class_count += 1
             elif current_type == "method_declaration":
-                method_name_node = current_node.children[2]  # Assuming method name is the second child
-                var_nodes.append([method_name_node, "method_{}".format(method_count)])
+                var_nodes.append([current_node.children[2], f"method_{method_count}"])
                 method_count += 1
             for child_node in current_node.children:
                 child_type = str(child_node.type)
@@ -32,7 +30,7 @@ class ApexCodeUtility(LanguageSpecificUtility):
                         continue
                     var_name = text[child_node.start_byte: child_node.end_byte]
                     if var_name not in var_renames:
-                        var_renames[var_name] = "var{}".format(len(var_renames) + 1)
+                        var_renames[var_name] = f"var{len(var_renames) + 1}"
                     var_nodes.append([child_node, var_renames[var_name]])
                 queue.append(child_node)
         return var_nodes

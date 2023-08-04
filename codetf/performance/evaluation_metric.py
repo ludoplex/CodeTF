@@ -44,9 +44,11 @@ class EvaluationMetric:
     def compute_rouge(self, hypotheses, references):
         scorer = rouge_scorer.RougeScorer(['rouge1', 'rougeL'], use_stemmer=True)
         scores = [scorer.score(ref, hyp) for ref, hyp in zip(references, hypotheses)]
-        rouge1 = sum([score['rouge1'].fmeasure for score in scores]) / len(scores)
-        rougeL = sum([score['rougeL'].fmeasure for score in scores]) / len(scores)
+        rouge1 = sum(score['rouge1'].fmeasure for score in scores) / len(scores)
+        rougeL = sum(score['rougeL'].fmeasure for score in scores) / len(scores)
         return {"rouge1": rouge1, "rougeL": rougeL}
 
     def compute_meteor(self, hypotheses, references):
-        return sum([meteor_score([ref], hyp) for ref, hyp in zip(references, hypotheses)]) / len(hypotheses)
+        return sum(
+            meteor_score([ref], hyp) for ref, hyp in zip(references, hypotheses)
+        ) / len(hypotheses)

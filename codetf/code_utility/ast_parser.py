@@ -37,13 +37,11 @@ def previous_sibling(tree, node):
     TODO: C TreeSitter should support this natively, but not its Python bindings yet. Replace later.
     """
     to_visit = [tree.root_node]
-    while len(to_visit) > 0:
+    while to_visit:
         next_node = to_visit.pop()
         for i, node_at_i in enumerate(next_node.children):
             if nodes_are_equal(node, node_at_i):
-                if i > 0:
-                    return next_node.children[i-1]
-                return None
+                return next_node.children[i-1] if i > 0 else None
         else:
             to_visit.extend(next_node.children)
     return ValueError("Could not find node in tree.")
@@ -51,7 +49,7 @@ def previous_sibling(tree, node):
 
 def node_parent(tree, node):
     to_visit = [tree.root_node]
-    while len(to_visit) > 0:
+    while to_visit:
         next_node = to_visit.pop()
         for child in next_node.children:
             if nodes_are_equal(child, node):
@@ -84,10 +82,7 @@ def traverse_type(node, results: List, kinds) -> None:
 
 def remove_redundant_token(content):
     content_splits = content.split()
-    content_splits_new = []
-    for s in content_splits:
-        if s not in ["{", "}"]:
-            content_splits_new.append(s)
+    content_splits_new = [s for s in content_splits if s not in ["{", "}"]]
     return " ".join(content_splits_new)
 
 # def traverse_type(cursor, results: List, kinds) -> None:
@@ -102,7 +97,7 @@ def print_all_nodes(tree):
     cursor = tree.walk()
 
     reached_root = False
-    while reached_root == False:
+    while not reached_root:
         yield cursor.node
 
         if cursor.goto_first_child():
@@ -125,7 +120,7 @@ def get_tree_node_with_kinds(tree, kinds):
     cursor = tree.walk()
 
     reached_root = False
-    while reached_root == False:
+    while not reached_root:
         if cursor.node.type in kinds:
             yield cursor.node
 
@@ -150,8 +145,8 @@ class ASTParser():
     def __init__(self, language):
         self.PARSER = Parser()
         self.language = language
-        if self.language == None:
-            self.LOGGER.info("Cannot find prebuilts file for language {}".format(language))
+        if self.language is None:
+            self.LOGGER.info(f"Cannot find prebuilts file for language {language}")
 
         language_build = self.get_language(self.language)
         self.PARSER.set_language(language_build)

@@ -29,9 +29,12 @@ install_requires = [
 DEPENDENCY_LINKS = []
 if platform.system() == "Windows":
     DEPENDENCY_LINKS.append("https://download.pytorch.org/whl/torch_stable.html")
-DEPENDENCY_LINKS.append("git+https://github.com/huggingface/transformers.git")
-DEPENDENCY_LINKS.append("git+https://github.com/huggingface/peft.git")
-    
+DEPENDENCY_LINKS.extend(
+    (
+        "git+https://github.com/huggingface/transformers.git",
+        "git+https://github.com/huggingface/peft.git",
+    )
+)
 setup(
   name = 'salesforce-codetf',
   version = "1.0.2.2",

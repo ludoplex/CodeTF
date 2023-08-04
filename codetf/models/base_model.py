@@ -12,19 +12,20 @@ import urllib.request
 from accelerate import Accelerator
 
 def download_model(model_cache_path, model_url):
-    if not os.path.exists(model_cache_path):
-        with urllib.request.urlopen(model_url) as response, open(model_cache_path, 'wb') as out_file:
-            total_size = int(response.getheader('Content-Length'))
-            chunk_size = 1024
-            progress = tqdm(total=total_size, unit='B', unit_scale=True, desc=model_cache_path)
-            
-            while True:
-                chunk = response.read(chunk_size)
-                if not chunk:
-                    break
-                out_file.write(chunk)
-                progress.update(len(chunk))
-            progress.close()
+    if os.path.exists(model_cache_path):
+        return
+    with urllib.request.urlopen(model_url) as response, open(model_cache_path, 'wb') as out_file:
+        total_size = int(response.getheader('Content-Length'))
+        chunk_size = 1024
+        progress = tqdm(total=total_size, unit='B', unit_scale=True, desc=model_cache_path)
+
+        while True:
+            chunk = response.read(chunk_size)
+            if not chunk:
+                break
+            out_file.write(chunk)
+            progress.update(len(chunk))
+        progress.close()
 
 class BaseModel(nn.Module):
     """Base class for models."""
@@ -40,24 +41,30 @@ class BaseModel(nn.Module):
         return list(self.parameters())[0].device
     
     @classmethod
-    def from_pretrained(model_class, model_card, load_in_8bit=False, load_in_4bit=False, weight_sharding=False):
+    def from_pretrained(cls, model_card, load_in_8bit=False, load_in_4bit=False, weight_sharding=False):
         """
         Build a pretrained model from default configuration file, specified by model_type.
         """
-        model_config = OmegaConf.load(get_abs_path(model_class.MODEL_DICT))[model_card]
-        model_cls = model_class.load_huggingface_model_from_config(model_config=model_config, load_in_8bit=load_in_8bit, load_in_4bit=load_in_4bit, weight_sharding=weight_sharding)
-
-        return model_cls
+        model_config = OmegaConf.load(get_abs_path(cls.MODEL_DICT))[model_card]
+        return cls.load_huggingface_model_from_config(
+            model_config=model_config,
+            load_in_8bit=load_in_8bit,
+            load_in_4bit=load_in_4bit,
+            weight_sharding=weight_sharding,
+        )
     
 
     @classmethod
-    def from_custom(model_class, checkpoint_path, tokenizer_path, load_in_8bit=False, load_in_4bit=False):
+    def from_custom(cls, checkpoint_path, tokenizer_path, load_in_8bit=False, load_in_4bit=False):
         """
         Build a pretrained model from default configuration file, specified by model_type.
         """
-        model_cls = model_class.load_custom_model(checkpoint_path, tokenizer_path, load_in_8bit=load_in_8bit, load_in_4bit=load_in_4bit)
-
-        return model_cls
+        return cls.load_custom_model(
+            checkpoint_path,
+            tokenizer_path,
+            load_in_8bit=load_in_8bit,
+            load_in_4bit=load_in_4bit,
+        )
 
     def get_model(self):
         return self.model
@@ -76,10 +83,9 @@ class BaseModel(nn.Module):
             for x in p.shape:
                 w *= x
             tot += w
-        if return_str:
-            if tot >= 1e6:
-                return "{:.1f}M".format(tot / 1e6)
-            else:
-                return "{:.1f}K".format(tot / 1e3)
-        else:
+        if not return_str:
             return tot
+        if tot >= 1e6:
+            return "{:.1f}M".format(tot / 1e6)
+        else:
+            return "{:.1f}K".format(tot / 1e3)

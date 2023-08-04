@@ -60,9 +60,13 @@ class BaseTrainer():
     def get_default_codet5_hyperparameters(self):
         hyperparameters_config = OmegaConf.load(get_abs_path(self.DEFAULT_CODET5_HYPERPARAMETERS)).hyperparameters
 
-        training_args = TrainingArguments(
-            per_device_train_batch_size=hyperparameters_config["per_device_train_batch_size"],
-            gradient_accumulation_steps=hyperparameters_config["gradient_accumulation_steps"],
+        return TrainingArguments(
+            per_device_train_batch_size=hyperparameters_config[
+                "per_device_train_batch_size"
+            ],
+            gradient_accumulation_steps=hyperparameters_config[
+                "gradient_accumulation_steps"
+            ],
             num_train_epochs=hyperparameters_config["num_train_epochs"],
             warmup_steps=hyperparameters_config["warmup_steps"],
             learning_rate=hyperparameters_config["learning_rate"],
@@ -72,20 +76,26 @@ class BaseTrainer():
             logging_steps=hyperparameters_config["logging_steps"],
             evaluation_strategy=hyperparameters_config["evaluation_strategy"],
             save_strategy=hyperparameters_config["save_strategy"],
-            gradient_checkpointing=hyperparameters_config["gradient_checkpointing"],
+            gradient_checkpointing=hyperparameters_config[
+                "gradient_checkpointing"
+            ],
             auto_find_batch_size=hyperparameters_config["auto_find_batch_size"],
-            load_best_model_at_end=hyperparameters_config["load_best_model_at_end"],
-            output_dir=self.checkpoints_path
+            load_best_model_at_end=hyperparameters_config[
+                "load_best_model_at_end"
+            ],
+            output_dir=self.checkpoints_path,
         )
-        # return hyperparameters_config
-        return training_args
     
     def get_default_causal_lm_hyperparameters(self):
         hyperparameters_config = OmegaConf.load(get_abs_path(self.DEFAULT_CAUSAL_LM_HYPERPARAMETERS)).hyperparameters
 
-        training_args = TrainingArguments(
-            per_device_train_batch_size=hyperparameters_config["per_device_train_batch_size"],
-            gradient_accumulation_steps=hyperparameters_config["gradient_accumulation_steps"],
+        return TrainingArguments(
+            per_device_train_batch_size=hyperparameters_config[
+                "per_device_train_batch_size"
+            ],
+            gradient_accumulation_steps=hyperparameters_config[
+                "gradient_accumulation_steps"
+            ],
             num_train_epochs=hyperparameters_config["num_train_epochs"],
             warmup_steps=hyperparameters_config["num_train_epochs"],
             learning_rate=hyperparameters_config["learning_rate"],
@@ -95,25 +105,27 @@ class BaseTrainer():
             logging_steps=hyperparameters_config["logging_steps"],
             evaluation_strategy=hyperparameters_config["evaluation_strategy"],
             save_strategy=hyperparameters_config["save_strategy"],
-            gradient_checkpointing=hyperparameters_config["gradient_checkpointing"],
+            gradient_checkpointing=hyperparameters_config[
+                "gradient_checkpointing"
+            ],
             auto_find_batch_size=hyperparameters_config["auto_find_batch_size"],
-            load_best_model_at_end=hyperparameters_config["load_best_model_at_end"],
-            output_dir=self.checkpoints_path
+            load_best_model_at_end=hyperparameters_config[
+                "load_best_model_at_end"
+            ],
+            output_dir=self.checkpoints_path,
         )
-        # return hyperparameters_config
-        return training_args
     
     def get_default_lora_config_for_codet5(self):
         
         config = OmegaConf.load(get_abs_path(self.DEFAULT_CODET5_HYPERPARAMETERS)).lora
 
-        lora_config = LoraConfig(
-            task_type=TaskType.SEQ_2_SEQ_LM, 
-            inference_mode=False, r=config["r"], 
-            lora_alpha=config["lora_alpha"], 
-            lora_dropout=config["lora_dropout"]
+        return LoraConfig(
+            task_type=TaskType.SEQ_2_SEQ_LM,
+            inference_mode=False,
+            r=config["r"],
+            lora_alpha=config["lora_alpha"],
+            lora_dropout=config["lora_dropout"],
         )
-        return lora_config
 
     # def get_default_adalora_config_for_codet5(self):
         
@@ -143,12 +155,10 @@ class BaseTrainer():
         
         config = OmegaConf.load(get_abs_path(self.DEFAULT_CODET5_HYPERPARAMETERS)).prefixtuning
 
-        prefixtuning_config = PrefixTuningConfig(
+        return PrefixTuningConfig(
             num_virtual_tokens=config["num_virtual_tokens"],
-            task_type=TaskType.SEQ_2_SEQ_LM
+            task_type=TaskType.SEQ_2_SEQ_LM,
         )
-
-        return prefixtuning_config
     
     
 

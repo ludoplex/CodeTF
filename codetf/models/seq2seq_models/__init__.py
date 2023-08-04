@@ -30,7 +30,7 @@ class Seq2SeqModel(BaseModel):
     
   
     @classmethod
-    def load_huggingface_model_from_config(model_class, model_config, load_in_8bit=False, load_in_4bit=False, weight_sharding=False):
+    def load_huggingface_model_from_config(cls, model_config, load_in_8bit=False, load_in_4bit=False, weight_sharding=False):
         
         checkpoint = model_config["huggingface_url"]
 
@@ -59,54 +59,60 @@ class Seq2SeqModel(BaseModel):
                 model, weights_location, model_config["device_map"], 
                 no_split_module_classes=["GPTJBlock"]
             )
+        elif load_in_8bit:
+            model = (
+                AutoModelForSeq2SeqLM.from_pretrained(
+                    checkpoint,
+                    load_in_8bit=load_in_8bit,
+                    low_cpu_mem_usage=True,
+                    device_map="auto",
+                    trust_remote_code=model_config["trust_remote_code"],
+                )
+                if model_config["device_map"]
+                else AutoModelForSeq2SeqLM.from_pretrained(
+                    checkpoint,
+                    load_in_8bit=load_in_8bit,
+                    low_cpu_mem_usage=True,
+                    trust_remote_code=model_config["trust_remote_code"],
+                )
+            )
+        elif load_in_4bit:
+            model = (
+                AutoModelForSeq2SeqLM.from_pretrained(
+                    checkpoint,
+                    load_in_4bit=load_in_4bit,
+                    low_cpu_mem_usage=True,
+                    device_map="auto",
+                    trust_remote_code=model_config["trust_remote_code"],
+                )
+                if model_config["device_map"]
+                else AutoModelForSeq2SeqLM.from_pretrained(
+                    checkpoint,
+                    load_in_4bit=load_in_4bit,
+                    low_cpu_mem_usage=True,
+                    trust_remote_code=model_config["trust_remote_code"],
+                )
+            )
+        elif model_config["device_map"]:
+            model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint, 
+                                        low_cpu_mem_usage=True,
+                                        device_map=model_config["device_map"], trust_remote_code=model_config["trust_remote_code"])
         else:
-            if load_in_8bit:
-                if model_config["device_map"]:
-                    model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint, 
-                                                load_in_8bit=load_in_8bit, 
-                                                low_cpu_mem_usage=True,
-                                                device_map="auto", trust_remote_code=model_config["trust_remote_code"])
-                else: 
-                    model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint, 
-                                                load_in_8bit=load_in_8bit, 
-                                                low_cpu_mem_usage=True,
-                                                trust_remote_code=model_config["trust_remote_code"])
-            elif load_in_4bit:
-                if model_config["device_map"]:
-                    model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint, 
-                                                load_in_4bit=load_in_4bit, 
-                                                low_cpu_mem_usage=True,
-                                                device_map="auto", trust_remote_code=model_config["trust_remote_code"])
-                else:
-                    model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint, 
-                                                load_in_4bit=load_in_4bit, 
-                                                low_cpu_mem_usage=True,
-                                                trust_remote_code=model_config["trust_remote_code"])
-            else:
-                if model_config["device_map"]:
-                    model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint, 
-                                                low_cpu_mem_usage=True,
-                                                device_map=model_config["device_map"], trust_remote_code=model_config["trust_remote_code"])
-                else:
-                    model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint, 
-                                                low_cpu_mem_usage=True,
-                                                trust_remote_code=model_config["trust_remote_code"]).to(device)
+            model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint, 
+                                        low_cpu_mem_usage=True,
+                                        trust_remote_code=model_config["trust_remote_code"]).to(device)
 
-           
-        tokenizer = model_class.init_tokenizer(model_config.get("tokenizer_url"))
 
-        return model_class(
-            model=model,
-            model_config=model_config,
-            tokenizer=tokenizer
-        )
+        tokenizer = cls.init_tokenizer(model_config.get("tokenizer_url"))
+
+        return cls(model=model, model_config=model_config, tokenizer=tokenizer)
     
     @classmethod
-    def load_custom_model(model_class, checkpoint_path, tokenizer_path, load_in_8bit=False, load_in_4bit=False):
+    def load_custom_model(cls, checkpoint_path, tokenizer_path, load_in_8bit=False, load_in_4bit=False):
 
         if load_in_8bit and load_in_4bit:
             raise ValueError("Only one of load_in_8bit or load_in_4bit can be True. Please choose one.")
-        
+
         if load_in_8bit:
             model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint_path, 
                                         load_in_8bit=load_in_8bit, 
@@ -122,13 +128,9 @@ class Seq2SeqModel(BaseModel):
                                         low_cpu_mem_usage=True,
                                         device_map="auto")
 
-        tokenizer = model_class.init_tokenizer(tokenizer_path)
-        
-        return model_class(
-            model=model,
-            model_config=model_config,
-            tokenizer=tokenizer
-        )
+        tokenizer = cls.init_tokenizer(tokenizer_path)
+
+        return cls(model=model, model_config=model_config, tokenizer=tokenizer)
 
 
     def forward(self, sources, max_length=512, beam_size=5):
@@ -138,13 +140,10 @@ class Seq2SeqModel(BaseModel):
                                             max_length=max_length, 
                                             num_beams=beam_size)
 
-        predictions = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
-        return predictions
+        return self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
     
 
     def predict(self, sources, max_length=512, beam_size=5):
         
         input_for_net = [' '.join(source.strip().split()).replace('\n', ' ') for source in sources]
-        output = self.forward(input_for_net, max_length, beam_size)
-       
-        return output
+        return self.forward(input_for_net, max_length, beam_size)

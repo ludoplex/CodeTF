@@ -19,8 +19,7 @@ class BaseDataset():
         self.dataset_config = self.load_dataset_config_dict()
 
     def load_dataset_config_dict(self):
-        dataset_config = OmegaConf.load(get_abs_path(self.DATASET_CONFIG_PATH)).dataset
-        return dataset_config
+        return OmegaConf.load(get_abs_path(self.DATASET_CONFIG_PATH)).dataset
 
     def process_data(self, data, padding="max_length", truncation=True):
         outputs = self.tokenizer(data, padding=padding, truncation=truncation, return_tensors="pt", max_length=self.max_length)

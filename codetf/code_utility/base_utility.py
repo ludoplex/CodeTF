@@ -7,8 +7,7 @@ class BaseUtility():
         self.parser = ASTParser(language) 
     
     def parse(self, code_snippet):
-        tree = self.parser.parse(bytes(code_snippet, "utf8"))
-        return tree
+        return self.parser.parse(bytes(code_snippet, "utf8"))
 
     def remove_comments(self, code_snippet):
         if self.language == "python":

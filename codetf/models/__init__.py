@@ -31,13 +31,11 @@ def construct_model_card(model_name, model_type=None, task=None,
 
     if language:
         model_card_parts.append(language)
-    
-    model_card_name = "-".join(model_card_parts)
-    return model_card_name
+
+    return "-".join(model_card_parts)
 
 def get_model_class_name(model_name, task):
-    class_name = f"{model_name}_{task}"
-    return class_name
+    return f"{model_name}_{task}"
 
 def load_model_pipeline(model_name, model_type="base", task="sum",
             dataset=None, language=None, is_eval=True, 
@@ -89,8 +87,10 @@ class ModelZoo:
         return model_name, model_type, task
 
     def __str__(self):
-        output = "============================================================================================================\n"
-        output += "Architectures                  Types                           Tasks\n"
+        output = (
+            "============================================================================================================\n"
+            + "Architectures                  Types                           Tasks\n"
+        )
         output += "============================================================================================================\n"
         for model_name, model_infos in self.models.items():
             for i, model_info in enumerate(model_infos):
